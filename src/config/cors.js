@@ -1,7 +1,7 @@
 import cors from "cors";
 
 const corsOptions = {
-  origin: "http://localhost:3000",
+  origin: ["http://localhost:3000", "https://freightory-dashboard-client-h8ep.vercel.app"],
   credentials: true,
 };
 

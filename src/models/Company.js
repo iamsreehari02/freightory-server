@@ -9,7 +9,7 @@ const companySchema = new mongoose.Schema(
     country: { type: String, required: true },
     pinCode: { type: String, required: true },
     freightType: {
-      type: [String],
+      type: String,
       enum: ["Freight Forwarder", "NVOCC"],
       required: true,
     },
