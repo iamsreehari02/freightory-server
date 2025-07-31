@@ -13,6 +13,14 @@ const companySchema = new mongoose.Schema(
       enum: ["Freight Forwarder", "NVOCC"],
       required: true,
     },
+    costPerBranch: {
+      type: Number,
+      default: 50, // USD
+      required: true,
+    },
+    baseRegistrationFee: Number,
+    // Optional for reporting
+    totalRegistrationCost: Number,
   },
   { timestamps: true }
 );

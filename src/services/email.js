@@ -20,7 +20,7 @@ export async function sendEmailTemplate({
       "https://api.brevo.com/v3/smtp/email",
       {
         sender: {
-          name: "Freightory",
+          name: "INDLOG NETWORK",
           email: BREVO_SENDER_EMAIL,
         },
         to: [{ email: to }],

@@ -1,3 +1,4 @@
+import { Branch } from "../models/Branch.js";
 import User from "../models/User.js";
 import {
   loginUser,
@@ -53,10 +54,33 @@ export const getMe = async (req, res) => {
   }
 };
 
+// export const register = async (req, res) => {
+//   try {
+//     const { user, company } = await registerCompanyAndUser(req.body);
+
+//     req.session.userId = user._id;
+//     req.session.companyId = company._id;
+
+//     res.status(201).json({
+//       message: "Registered successfully",
+//       userId: user._id,
+//       companyId: company._id,
+//     });
+//   } catch (error) {
+//     res.status(400).json({ message: error.message });
+//   }
+// };
+
 export const register = async (req, res) => {
   try {
-    const { user, company } = await registerCompanyAndUser(req.body);
+    const { user, company, branchCount } = await registerCompanyAndUser(
+      req.body
+    );
 
+    const totalCost =
+      company.baseRegistrationFee + branchCount * company.costPerBranch;
+
+    // Set session
     req.session.userId = user._id;
     req.session.companyId = company._id;
 
@@ -64,6 +88,12 @@ export const register = async (req, res) => {
       message: "Registered successfully",
       userId: user._id,
       companyId: company._id,
+      branchInfo: {
+        count: branchCount,
+        costPerBranch: company.costPerBranch,
+        baseRegistrationFee: company.baseRegistrationFee,
+        totalCost,
+      },
     });
   } catch (error) {
     res.status(400).json({ message: error.message });
