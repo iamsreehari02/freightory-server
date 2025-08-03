@@ -4,7 +4,7 @@ import dotenv from "dotenv";
 import connectDB from "./config/db.js";
 import routes from "./routes/index.js";
 import corsMiddleware from "./config/cors.js";
-import sessionMiddleware from "./config/session.js";
+import cookieParser from "cookie-parser";
 
 dotenv.config();
 connectDB();
@@ -13,9 +13,11 @@ const app = express();
 
 app.use(corsMiddleware);
 
+app.use(cookieParser());
+
 app.use(express.json());
 
-app.use(sessionMiddleware);
+// app.use(sessionMiddleware);
 
 app.use("/api", routes);
 

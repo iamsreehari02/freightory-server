@@ -10,7 +10,7 @@ const companySchema = new mongoose.Schema(
     pinCode: { type: String, required: true },
     freightType: {
       type: String,
-      enum: ["Freight Forwarder", "NVOCC"],
+      enum: ["freight_forwarder", "nvocc"],
       required: true,
     },
     costPerBranch: {

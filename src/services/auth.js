@@ -21,7 +21,7 @@ export const loginUser = async (email, password) => {
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) throw new Error("Invalid credentials");
 
-  return { id: user._id, email: user.email };
+  return { id: user._id, email: user.email, role: user.role };
 };
 
 // export const registerCompanyAndUser = async (data) => {
@@ -80,7 +80,6 @@ export const registerCompanyAndUser = async (data) => {
       freightType,
       password,
       branchCount = 1,
-      // costPerBranch,
     } = data;
 
     const existingUser = await User.findOne({ email }).session(session);
@@ -97,7 +96,8 @@ export const registerCompanyAndUser = async (data) => {
     if (normalizedFreightType === "freight_forwarder") {
       baseRegistrationFee = 10000;
       costPerBranch = 5000;
-    } else if (freightType === "nvooc") {
+    } else if (normalizedFreightType === "nvocc") {
+      // Fix: use normalizedFreightType here too
       baseRegistrationFee = 20000;
       costPerBranch = 0;
       finalBranchCount = 0;
@@ -114,7 +114,7 @@ export const registerCompanyAndUser = async (data) => {
           headOfficeAddress,
           country,
           pinCode,
-          freightType,
+          freightType: normalizedFreightType, // Store normalized version for consistency
           costPerBranch,
           baseRegistrationFee,
           totalRegistrationCost: totalCost,
@@ -129,9 +129,12 @@ export const registerCompanyAndUser = async (data) => {
       })
     );
 
-    const createdBranches = await Branch.insertMany(branchesToCreate, {
-      session,
-    });
+    // Only create branches if there are any to create
+    if (finalBranchCount > 0) {
+      const createdBranches = await Branch.insertMany(branchesToCreate, {
+        session,
+      });
+    }
 
     const hashedPassword = await bcrypt.hash(password, 12);
 
@@ -142,6 +145,7 @@ export const registerCompanyAndUser = async (data) => {
           email,
           phone,
           password: hashedPassword,
+          role: normalizedFreightType,
         },
       ],
       { session }
