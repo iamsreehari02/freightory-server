@@ -11,6 +11,7 @@ import {
   registerCompanyAndUser,
   registerUser,
 } from "../services/auth.js";
+import { deleteUser, suspendUser } from "../services/users.js";
 
 export const signup = async (req, res) => {
   const { email, password } = req.body;
@@ -149,3 +150,44 @@ export const register = async (req, res) => {
     res.status(400).json({ message: error.message });
   }
 };
+
+export const deleteUserController = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    await deleteUser(userId);
+
+    console.log(`User ${userId} deleted by ${req.user.userId}`);
+    res.json({ message: "User soft deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting user:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const suspendUserController = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { suspend } = req.body;
+
+    await suspendUser(userId, suspend);
+
+    console.log(
+      `User ${userId} ${suspend ? "suspended" : "reactivated"} by ${req.user.userId}`
+    );
+    res.json({ message: suspend ? "User suspended" : "User reactivated" });
+  } catch (error) {
+    console.error("Error suspending user:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// export const sendEmailController = async (req, res) => {
+//   try {
+//     const { to, subject, text, html } = req.body;
+//     await sendEmailToUser({ to, subject, text, html });
+//     res.json({ message: "Email sent successfully" });
+//   } catch (error) {
+//     console.error("Error sending email:", error);
+//     res.status(500).json({ message: "Email sending failed" });
+//   }
+// };

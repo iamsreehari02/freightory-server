@@ -10,6 +10,10 @@ export const requireAuth = (req, res, next) => {
     return res.status(401).json({ message: "Invalid or incomplete token" });
   }
 
-  req.user = decoded;
+  req.user = {
+    userId: String(decoded.userId),
+    role: decoded.role,
+  };
+
   next();
 };

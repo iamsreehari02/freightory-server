@@ -18,6 +18,10 @@ const companySchema = new mongoose.Schema(
       default: 50, // USD
       required: true,
     },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
     baseRegistrationFee: Number,
     // Optional for reporting
     totalRegistrationCost: Number,

@@ -15,6 +15,14 @@ const userSchema = new mongoose.Schema(
       enum: ["admin", "freight_forwarder", "nvocc"],
       required: true,
     },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
+    isSuspended: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );
