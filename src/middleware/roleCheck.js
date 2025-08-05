@@ -2,8 +2,6 @@ export default function RoleCheck(allowedRoles = []) {
   return (req, res, next) => {
     const user = req.user;
 
-    console.log("user", user);
-
     if (!user || !allowedRoles.includes(user.role)) {
       return res
         .status(403)

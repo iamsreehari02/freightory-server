@@ -1,7 +1,11 @@
 import cors from "cors";
 
 const corsOptions = {
-  origin: ["http://localhost:3000", "https://app.indlognetwork.com"],
+  origin: [
+    "http://localhost:3000",
+    "http://localhost:3001",
+    "https://app.indlognetwork.com",
+  ],
   credentials: true,
 };
 

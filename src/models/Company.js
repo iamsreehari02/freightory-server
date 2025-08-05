@@ -13,18 +13,26 @@ const companySchema = new mongoose.Schema(
       enum: ["freight_forwarder", "nvocc"],
       required: true,
     },
+    currency: {
+      type: String,
+      required: true, // e.g., "INR", "USD"
+    },
     costPerBranch: {
-      type: Number,
-      default: 50, // USD
+      type: Number, // in minor units like paise or cents
+      default: 5000, // e.g. 5000 paise = ₹50.00
       required: true,
+    },
+    baseRegistrationFee: {
+      type: Number, // in minor units
+      required: true,
+    },
+    totalRegistrationCost: {
+      type: Number, // in minor units
     },
     isDeleted: {
       type: Boolean,
       default: false,
     },
-    baseRegistrationFee: Number,
-    // Optional for reporting
-    totalRegistrationCost: Number,
   },
   { timestamps: true }
 );

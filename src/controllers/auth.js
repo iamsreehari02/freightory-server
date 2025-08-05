@@ -40,9 +40,11 @@ export const login = async (req, res) => {
   try {
     const user = await loginUser(email, password);
 
-    console.log("user in login", user);
-
-    const token = signJwt({ userId: user.id, role: user.role });
+    const token = signJwt({
+      userId: user.id,
+      role: user.role,
+      companyId: user.companyId,
+    });
     setTokenCookie(res, token);
 
     res.status(200).json({ message: "Login successful", user });

@@ -13,6 +13,7 @@ export const requireAuth = (req, res, next) => {
   req.user = {
     userId: String(decoded.userId),
     role: decoded.role,
+    companyId: decoded.companyId,
   };
 
   next();

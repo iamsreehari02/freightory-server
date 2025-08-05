@@ -28,6 +28,7 @@ export const getUsers = async (latest = false) => {
         costPerBranch
         baseRegistrationFee
         totalRegistrationCost
+        currency
       `,
     })
     .lean();
@@ -37,9 +38,9 @@ export const getUsers = async (latest = false) => {
       let company = null;
 
       if (user.companyId) {
-        const { currencyCode, symbol } = await getCurrencyFromCountryCode(
-          user.companyId.country
-        );
+        // const { currencyCode, symbol } = await getCurrencyFromCountryCode(
+        //   user.companyId.country
+        // );
 
         company = {
           _id: user.companyId._id,
@@ -53,8 +54,7 @@ export const getUsers = async (latest = false) => {
           costPerBranch: user.companyId.costPerBranch,
           baseRegistrationFee: user.companyId.baseRegistrationFee,
           totalRegistrationCost: user.companyId.totalRegistrationCost,
-          currencyCode,
-          currencySymbol: symbol,
+          currency: user.companyId.currency,
         };
       }
 
@@ -92,6 +92,7 @@ export const getUserById = async (userId) => {
         costPerBranch
         baseRegistrationFee
         totalRegistrationCost
+        currency
       `,
     })
     .lean();
@@ -101,9 +102,9 @@ export const getUserById = async (userId) => {
   let company = null;
 
   if (user.companyId) {
-    const { currencyCode, symbol } = await getCurrencyFromCountryCode(
-      user.companyId.country
-    );
+    // const { currencyCode, symbol } = await getCurrencyFromCountryCode(
+    //   user.companyId.country
+    // );
 
     company = {
       _id: user.companyId._id,
@@ -117,8 +118,8 @@ export const getUserById = async (userId) => {
       costPerBranch: user.companyId.costPerBranch,
       baseRegistrationFee: user.companyId.baseRegistrationFee,
       totalRegistrationCost: user.companyId.totalRegistrationCost,
-      currencyCode,
-      currencySymbol: symbol,
+      currencyCode: user.companyId.currency,
+      // currencySymbol: symbol,
     };
   }
 

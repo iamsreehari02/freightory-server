@@ -10,3 +10,16 @@ export async function getCurrencyFromCountryCode(code) {
     return { currencyCode: "USD", symbol: "$" };
   }
 }
+
+const countryToCurrency = {
+  india: "INR",
+  "united states": "USD",
+  "united arab emirates": "AED",
+  "united kingdom": "GBP",
+  canada: "CAD",
+  // Add more as needed
+};
+
+export function getCurrencyCodeFromCountry(country) {
+  return countryToCurrency[country.toLowerCase()] || "USD"; // default fallback
+}
