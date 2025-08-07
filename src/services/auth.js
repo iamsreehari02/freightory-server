@@ -280,3 +280,37 @@ export const registerCompanyAndUser = async (data) => {
     throw error;
   }
 };
+
+export const updateUserAndCompanyService = async ({
+  userId,
+  companyId,
+  userData = {},
+  companyData = {},
+}) => {
+  let updatedUser = null;
+  let updatedCompany = null;
+
+  // Update user if userData is provided
+  if (Object.keys(userData).length > 0) {
+    updatedUser = await User.findByIdAndUpdate(userId, userData, {
+      new: true,
+      runValidators: true,
+    });
+    if (!updatedUser) {
+      throw new Error("User not found");
+    }
+  }
+
+  // Update company if companyData is provided
+  if (Object.keys(companyData).length > 0) {
+    updatedCompany = await Company.findByIdAndUpdate(companyId, companyData, {
+      new: true,
+      runValidators: true,
+    });
+    if (!updatedCompany) {
+      throw new Error("Company not found");
+    }
+  }
+
+  return { updatedUser, updatedCompany };
+};

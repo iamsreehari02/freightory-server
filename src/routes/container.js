@@ -4,6 +4,7 @@ import {
   addContainer,
   fetchNextContainerId,
   getAllContainers,
+  getLatestContainersController,
   handleGetAllContainerLogs,
   handleUpdateContainerStatus,
 } from "../controllers/container.js";
@@ -27,6 +28,13 @@ router.get(
   requireAuth,
   RoleCheck(["nvocc", "admin"]),
   handleGetAllContainerLogs
+);
+
+router.get(
+  "/latest",
+  requireAuth,
+  RoleCheck(["nvocc"]),
+  getLatestContainersController
 );
 
 export default router;

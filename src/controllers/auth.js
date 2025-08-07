@@ -10,6 +10,7 @@ import {
   loginUser,
   registerCompanyAndUser,
   registerUser,
+  updateUserAndCompanyService,
 } from "../services/auth.js";
 import { deleteUser, suspendUser } from "../services/users.js";
 
@@ -193,3 +194,26 @@ export const suspendUserController = async (req, res) => {
 //     res.status(500).json({ message: "Email sending failed" });
 //   }
 // };
+
+export const updateUserAndCompany = async (req, res) => {
+  try {
+    const { userId, companyId } = req.user;
+    const { userData, companyData } = req.body;
+
+    const { updatedUser, updatedCompany } = await updateUserAndCompanyService({
+      userId,
+      companyId,
+      userData,
+      companyData,
+    });
+
+    res.status(200).json({
+      message: "Profile updated successfully",
+      user: updatedUser,
+      company: updatedCompany,
+    });
+  } catch (error) {
+    console.error("Update error:", error);
+    res.status(500).json({ message: error.message });
+  }
+};

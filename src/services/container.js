@@ -81,3 +81,11 @@ export const getAllContainerLogsService = async () => {
 
   return logs;
 };
+
+export const getLatestContainers = async (skip = 0, limit = 20) => {
+  return await Container.find()
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit)
+    .populate("companyId", "companyName");
+};

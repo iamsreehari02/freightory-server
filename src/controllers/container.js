@@ -2,6 +2,7 @@ import { Container } from "../models/Container.js";
 import {
   createContainer,
   getAllContainerLogsService,
+  getLatestContainers,
   getNextContainerId,
   updateContainerStatus,
 } from "../services/container.js";
@@ -67,5 +68,18 @@ export const handleGetAllContainerLogs = async (req, res) => {
     res.status(200).json(logs);
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch container logs" });
+  }
+};
+
+export const getLatestContainersController = async (req, res) => {
+  try {
+    const skip = parseInt(req.query.skip) || 0;
+    const limit = parseInt(req.query.limit) || 20;
+
+    const containers = await getLatestContainers(skip, limit);
+    res.status(200).json(containers);
+  } catch (error) {
+    console.error("Error fetching latest containers:", error);
+    res.status(500).json({ message: "Failed to fetch latest containers" });
   }
 };
