@@ -34,7 +34,11 @@ export const getAllContainers = async (req, res) => {
   try {
     const containers = await Container.find()
       .sort({ createdAt: -1 })
-      .populate("companyId", "companyName");
+      .populate("companyId", "companyName")
+      .populate({
+        path: "port",
+        select: "name country",
+      });
     res.status(200).json(containers);
   } catch (err) {
     res.status(500).json({ message: err.message });

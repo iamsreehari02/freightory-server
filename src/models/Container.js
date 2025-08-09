@@ -17,7 +17,8 @@ const containerSchema = new mongoose.Schema(
       required: true,
     },
     port: {
-      type: String,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Port", // now references the Port model
       required: true,
     },
     unitsAvailable: {

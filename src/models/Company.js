@@ -29,6 +29,8 @@ const companySchema = new mongoose.Schema(
     totalRegistrationCost: {
       type: Number, // in minor units
     },
+    gstNo: { type: String },
+
     isDeleted: {
       type: Boolean,
       default: false,

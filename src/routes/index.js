@@ -5,6 +5,7 @@ import paypalRoutes from "./paypal.js";
 import usersRoutes from "./users.js";
 import dashboardRoutes from "./dashboard.js";
 import containerRoutes from "./container.js";
+import portRoutes from "./port.js";
 
 const router = express.Router();
 
@@ -14,5 +15,6 @@ router.use("/paypal", paypalRoutes);
 router.use("/users", usersRoutes);
 router.use("/dashboard", dashboardRoutes);
 router.use("/containers", containerRoutes);
+router.use("/port", portRoutes);
 
 export default router;

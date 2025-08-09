@@ -190,6 +190,7 @@ export const registerCompanyAndUser = async (data) => {
       freightType,
       password,
       branchCount = 1,
+      gstNo,
     } = data;
 
     const existingUser = await User.findOne({ email }).session(session);
@@ -235,6 +236,7 @@ export const registerCompanyAndUser = async (data) => {
           baseRegistrationFee,
           costPerBranch: costPerBranchInMinor,
           totalRegistrationCost: totalCost,
+          gstNo,
         },
       ],
       { session }
