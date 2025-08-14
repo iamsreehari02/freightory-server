@@ -2,8 +2,10 @@ import { Container } from "../models/Container.js";
 import {
   createContainer,
   getAllContainerLogsService,
+  getContainerByIdService,
   getLatestContainers,
   getNextContainerId,
+  softDeleteContainer,
   updateContainerStatus,
 } from "../services/container.js";
 
@@ -32,7 +34,7 @@ export const fetchNextContainerId = async (req, res) => {
 
 export const getAllContainers = async (req, res) => {
   try {
-    const containers = await Container.find()
+    const containers = await Container.find({ isDeleted: { $ne: true } }) 
       .sort({ createdAt: -1 })
       .populate("companyId", "companyName")
       .populate({
@@ -87,3 +89,33 @@ export const getLatestContainersController = async (req, res) => {
     res.status(500).json({ message: "Failed to fetch latest containers" });
   }
 };
+
+
+export const getContainerByIdController = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const container = await getContainerByIdService(id);
+
+    if (!container) {
+      return res.status(404).json({ message: "Container not found" });
+    }
+
+    res.status(200).json(container);
+  } catch (error) {
+    console.error("Error fetching container by ID:", error);
+    res.status(500).json({ message: "Failed to fetch container" });
+  }
+};
+
+export async function deleteContainer(req, res) {
+  try {
+    const container = await softDeleteContainer(req.params.id);
+    if (!container) {
+      return res.status(404).json({ message: "Container not found" });
+    }
+    res.json({ message: "Container moved to trash", container });
+  } catch (error) {
+    res.status(500).json({ message: "Error deleting container", error });
+  }
+}

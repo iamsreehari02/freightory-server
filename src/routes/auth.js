@@ -17,7 +17,7 @@ router.post("/login", login);
 router.post("/logout", logout);
 router.get("/me", getMe);
 
-router.patch("/", requireAuth, RoleCheck(["admin"]), updateUserAndCompany);
+router.patch("/", requireAuth, updateUserAndCompany);
 
 router.post("/register", register);
 
@@ -25,5 +25,7 @@ router.post("/otp/request", requestOtp);
 
 // POST /api/auth/otp/verify
 router.post("/otp/verify", verifyOtp);
+
+
 
 export default router;

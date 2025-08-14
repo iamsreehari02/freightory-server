@@ -33,6 +33,56 @@ import mongoose from "mongoose";
 //   return savedContainer;
 // };
 
+// export const createContainer = async (data, user) => {
+//   let port;
+
+//   // Check if data.port looks like a valid ObjectId (existing port)
+//   if (mongoose.Types.ObjectId.isValid(data.port)) {
+//     port = await Port.findOne({
+//       _id: data.port,
+//       companyId: user.companyId,
+//     });
+//   }
+
+//   // If port not found, treat data.port as a new port name
+//   if (!port) {
+//     // Create new port with given name and country & companyId from user
+//     port = new Port({
+//       name: data.port,
+//       country: data.country,
+//       companyId: user.companyId,
+//     });
+//     await port.save();
+//   }
+
+//   const containerId = await generateContainerId(user.country);
+
+//   const container = new Container({
+//     containerId,
+//     country: data.country,
+//     port: port._id, // store the port reference
+//     unitsAvailable: data.unitsAvailable,
+//     availableFrom: data.availableFrom,
+//     status: data.status || "available",
+//     createdBy: user._id,
+//     companyId: user.companyId,
+//   });
+
+//   const savedContainer = await container.save();
+
+//   // Populate port field
+//   await savedContainer.populate("port");
+
+//   await logContainerActivity({
+//     containerId: savedContainer._id,
+//     action: "created",
+//     message: `Container ${containerId} created at ${port.name} port`,
+//     createdBy: user._id,
+//   });
+
+//   return savedContainer;
+// };
+
 export const createContainer = async (data, user) => {
   let port;
 
@@ -46,7 +96,6 @@ export const createContainer = async (data, user) => {
 
   // If port not found, treat data.port as a new port name
   if (!port) {
-    // Create new port with given name and country & companyId from user
     port = new Port({
       name: data.port,
       country: data.country,
@@ -60,17 +109,18 @@ export const createContainer = async (data, user) => {
   const container = new Container({
     containerId,
     country: data.country,
-    port: port._id, // store the port reference
+    port: port._id,
     unitsAvailable: data.unitsAvailable,
     availableFrom: data.availableFrom,
     status: data.status || "available",
     createdBy: user._id,
     companyId: user.companyId,
+    specialRate: data.specialRate,  
+    agentDetails: data.agentDetails 
   });
 
   const savedContainer = await container.save();
 
-  // Populate port field
   await savedContainer.populate("port");
 
   await logContainerActivity({
@@ -82,6 +132,7 @@ export const createContainer = async (data, user) => {
 
   return savedContainer;
 };
+
 
 export const getNextContainerId = async (userId) => {
   const user = await User.findById(userId).populate("company").lean();
@@ -142,10 +193,28 @@ export const getAllContainerLogsService = async () => {
 };
 
 export const getLatestContainers = async (skip = 0, limit = 20) => {
-  return await Container.find()
+  return await Container.find({ isDeleted: { $ne: true } })
     .sort({ createdAt: -1 })
     .skip(skip)
     .limit(limit)
     .populate("companyId", "companyName")
     .populate("port", "name country"); // populate port's name and country fields
 };
+
+
+export const getContainerByIdService = async (id) => {
+  return await Container.findById({ _id: id, isDeleted: { $ne: true } })
+    .populate("companyId", "companyName")
+    .populate({
+      path: "port",
+      select: "name country",
+    });
+};
+
+export async function softDeleteContainer(id) {
+  return Container.findByIdAndUpdate(
+    id,
+    { isDeleted: true, deletedAt: new Date() },
+    { new: true }
+  );
+}

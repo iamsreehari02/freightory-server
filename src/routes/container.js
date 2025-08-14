@@ -2,8 +2,10 @@ import express from "express";
 import { requireAuth } from "../middleware/auth.js";
 import {
   addContainer,
+  deleteContainer,
   fetchNextContainerId,
   getAllContainers,
+  getContainerByIdController,
   getLatestContainersController,
   handleGetAllContainerLogs,
   handleUpdateContainerStatus,
@@ -23,6 +25,8 @@ router.patch(
   handleUpdateContainerStatus
 );
 
+router.patch("/:id/delete", deleteContainer);
+
 router.get(
   "/logs",
   requireAuth,
@@ -36,5 +40,8 @@ router.get(
   RoleCheck(["nvocc"]),
   getLatestContainersController
 );
+
+router.get("/:id", requireAuth,
+  RoleCheck(["nvocc"]), getContainerByIdController);
 
 export default router;

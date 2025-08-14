@@ -22,6 +22,8 @@ const companySchema = new mongoose.Schema(
       default: 5000, // e.g. 5000 paise = ₹50.00
       required: true,
     },
+      branchCount: { type: Number, default: 0 }, 
+
     baseRegistrationFee: {
       type: Number, // in minor units
       required: true,

@@ -19,11 +19,12 @@ export const getNvoccDashboardStats = async () => {
     status: "available",
   });
 
-  const lastUpdatedContainer = await Container.findOne()
+   const lastUpdatedContainer = await Container.findOne()
     .sort({ updatedAt: -1 })
-    .select("port");
+    .populate("port", "name") 
+    .lean();
 
-  const lastUpdatedPort = lastUpdatedContainer?.port || "—";
+  const lastUpdatedPort = lastUpdatedContainer?.port.name || "—";
 
   const recentActivitiesCount = await Container.countDocuments({
     updatedAt: { $gte: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000) }, // last 10 days

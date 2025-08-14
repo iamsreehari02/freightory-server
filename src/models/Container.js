@@ -39,6 +39,15 @@ const containerSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    specialRate: {
+      type: String,
+
+    },
+    agentDetails: {
+      type: String,
+    },
+    isDeleted: { type: Boolean, default: false },
+    deletedAt: { type: Date },
   },
   { timestamps: true }
 );
