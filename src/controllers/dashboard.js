@@ -1,5 +1,6 @@
 import {
   getDashboardStats,
+  getFreightForwarderDashboardStats,
   getNvoccDashboardStats,
 } from "../services/dashboard.js";
 
@@ -20,5 +21,17 @@ export const fetchNvoccDashboardStats = async (req, res) => {
   } catch (error) {
     console.error("Error fetching NVOCC dashboard stats:", error);
     res.status(500).json({ error: "Failed to fetch NVOCC dashboard stats" });
+  }
+};
+
+
+export const getFreightForwarderStatsController = async (req, res) => {
+  try {
+    const companyId = req.user.companyId;
+    const stats = await getFreightForwarderDashboardStats(companyId);
+    res.json(stats);
+  } catch (error) {
+    console.error("Error fetching freight-forwarder stats:", error);
+    res.status(500).json({ error: error.message });
   }
 };

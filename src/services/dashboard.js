@@ -1,3 +1,4 @@
+import { Branch } from "../models/Branch.js";
 import { Container } from "../models/Container.js";
 import User from "../models/User.js";
 
@@ -35,5 +36,27 @@ export const getNvoccDashboardStats = async () => {
     availableContainers,
     lastUpdatedPort,
     recentActivitiesCount,
+  };
+};
+
+
+
+export const getFreightForwarderDashboardStats = async (companyId) => {
+  const totalBranches = await Branch.countDocuments({ companyId });
+  const membershipStatus = "Active";
+
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+
+  const renewalsThisMonthCount = await Branch.countDocuments({
+    companyId,
+    renewalDate: { $gte: startOfMonth, $lte: endOfMonth },
+  });
+
+  return {
+    totalBranches,
+    membershipStatus,
+    upcomingRenewals: `${renewalsThisMonthCount} this month`, 
   };
 };

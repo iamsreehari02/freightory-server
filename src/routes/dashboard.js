@@ -2,6 +2,7 @@ import express from "express";
 import {
   fetchDashboardStats,
   fetchNvoccDashboardStats,
+  getFreightForwarderStatsController,
 } from "../controllers/dashboard.js";
 import { requireAuth } from "../middleware/auth.js";
 import RoleCheck from "../middleware/roleCheck.js";
@@ -16,5 +17,13 @@ router.get(
   RoleCheck(["nvocc"]),
   fetchNvoccDashboardStats
 );
+
+router.get(
+  "/freight-forwarder",
+  requireAuth,
+  RoleCheck(["freight_forwarder"]),
+  getFreightForwarderStatsController
+);
+
 
 export default router;

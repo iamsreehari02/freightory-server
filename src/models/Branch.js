@@ -13,6 +13,8 @@ const BranchSchema = new mongoose.Schema(
     contactPerson: { type: String, required: true },
     email: { type: String, required: true },
     phone: { type: String, required: true },
+    renewalDate: { type: Date, required: true }
+
   },
   { timestamps: true }
 );

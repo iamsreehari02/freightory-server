@@ -1,8 +1,11 @@
+import mongoose from "mongoose";
 import { Branch } from "../models/Branch.js";
 import {
     createBranch, deleteBranch,
     getBranchById,
     getBranchesByCompany,
+    getLatestBranchesByCompany,
+    getUpcomingRenewals,
 } from "../services/branch.js";
 
 
@@ -56,11 +59,37 @@ export async function getBranchByIdController(req, res) {
 }
 
 export async function getBranchesByCompanyController(req, res) {
-    try {
-        const companyId = req.user.companyId; // always use logged-in user's companyId
-        const branches = await getBranchesByCompany(companyId);
-        res.json(branches);
-    } catch (error) {
-        res.status(400).json({ error: error.message });
+  try {
+    const companyId = req.user.companyId;
+    if (!mongoose.Types.ObjectId.isValid(companyId)) {
+      return res.status(400).json({ error: "Invalid company ID" });
     }
+    const branches = await getBranchesByCompany(companyId);
+    res.json(branches);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
 }
+
+export async function getLatestBranch(req, res) {
+  try {
+    const companyId = req.user.companyId;
+    if (!mongoose.Types.ObjectId.isValid(companyId)) {
+      return res.status(400).json({ error: "Invalid company ID" });
+    }
+    const branch = await getLatestBranchesByCompany(companyId);
+    res.json(branch);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+}
+
+export const getUpcomingRenewalsController = async (req, res) => {
+  try {
+    const companyId = req.user.companyId; 
+    const data = await getUpcomingRenewals(companyId);
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
