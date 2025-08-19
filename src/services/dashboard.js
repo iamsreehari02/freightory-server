@@ -16,19 +16,21 @@ export const getDashboardStats = async () => {
 };
 
 export const getNvoccDashboardStats = async (companyId) => {
-  const companyObjectId = mongoose.Types.ObjectId(companyId);
+  const companyObjectId = new mongoose.Types.ObjectId(companyId);
 
-  const totalContainers = await Container.countDocuments({
+  const queryBase = {
     companyId: companyObjectId,
-  });
+    isDeleted: { $ne: true }, // exclude deleted containers
+  };
+
+  const totalContainers = await Container.countDocuments(queryBase);
+
   const availableContainers = await Container.countDocuments({
-    companyId: companyObjectId,
+    ...queryBase,
     status: "available",
   });
 
-  const lastUpdatedContainer = await Container.findOne({
-    companyId: companyObjectId,
-  })
+  const lastUpdatedContainer = await Container.findOne(queryBase)
     .sort({ updatedAt: -1 })
     .populate("port", "name")
     .lean();
@@ -36,7 +38,7 @@ export const getNvoccDashboardStats = async (companyId) => {
   const lastUpdatedPort = lastUpdatedContainer?.port?.name || "—";
 
   const recentActivitiesCount = await Container.countDocuments({
-    companyId: companyObjectId,
+    ...queryBase,
     updatedAt: { $gte: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000) }, // last 10 days
   });
 
