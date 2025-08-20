@@ -26,6 +26,4 @@ router.post("/otp/request", requestOtp);
 // POST /api/auth/otp/verify
 router.post("/otp/verify", verifyOtp);
 
-
-
 export default router;

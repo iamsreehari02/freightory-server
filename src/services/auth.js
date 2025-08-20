@@ -30,7 +30,6 @@ export const loginUser = async (email, password) => {
   };
 };
 
-
 export const registerCompanyAndUser = async (data) => {
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -64,7 +63,6 @@ export const registerCompanyAndUser = async (data) => {
       .toLowerCase()
       .replace(/\s+/g, "_");
 
-    // Base values in main unit (e.g. ₹ or $)
     if (normalizedFreightType === "freight_forwarder") {
       baseFee = 10000;
       costPerBranch = 5000;
@@ -74,13 +72,12 @@ export const registerCompanyAndUser = async (data) => {
       finalBranchCount = 0;
     }
 
-    // Convert to minor units (paise or cents)
     const baseRegistrationFee = baseFee * 100;
     const costPerBranchInMinor = costPerBranch * 100;
     const totalCost =
       baseRegistrationFee + finalBranchCount * costPerBranchInMinor;
 
-    const company = await Company.create(
+    const [company] = await Company.create(
       [
         {
           companyName,
@@ -100,22 +97,19 @@ export const registerCompanyAndUser = async (data) => {
       { session }
     );
 
-    const branchesToCreate = Array.from({ length: finalBranchCount }).map(
-      () => ({
-        companyId: company[0]._id,
-      })
-    );
-
     if (finalBranchCount > 0) {
+      const branchesToCreate = Array.from({ length: finalBranchCount }).map(
+        () => ({ companyId: company._id })
+      );
       await Branch.insertMany(branchesToCreate, { session });
     }
 
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    const user = await User.create(
+    const [user] = await User.create(
       [
         {
-          companyId: company[0]._id,
+          companyId: company._id,
           email,
           phone,
           password: hashedPassword,
@@ -125,17 +119,15 @@ export const registerCompanyAndUser = async (data) => {
       { session }
     );
 
-    await session.commitTransaction();
-    session.endSession();
-
+    // Instead of committing here, return session so emails can be sent first
     return {
-      user: user[0],
-      company: company[0],
+      user,
+      company,
       branchCount: finalBranchCount,
+      session,
     };
   } catch (error) {
     await session.abortTransaction();
-    console.log("error in ", error);
     session.endSession();
     throw error;
   }
@@ -174,5 +166,3 @@ export const updateUserAndCompanyService = async ({
 
   return { updatedUser, updatedCompany };
 };
-
-

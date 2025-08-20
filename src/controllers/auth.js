@@ -12,7 +12,14 @@ import {
   registerUser,
   updateUserAndCompanyService,
 } from "../services/auth.js";
+import { sendEmailTemplate } from "../services/email.js";
 import { deleteUser, suspendUser } from "../services/users.js";
+import {
+  adminRegistrationTemplate,
+  userThankYouTemplate,
+} from "../templates/register.js";
+
+const admin_email = process.env.ADMIN_EMAIL || "sh981572@gmail.com";
 
 export const signup = async (req, res) => {
   const { email, password } = req.body;
@@ -128,29 +135,77 @@ export const getMe = async (req, res) => {
   }
 };
 
-export const register = async (req, res) => {
-  try {
-    const { user, company, branchCount } = await registerCompanyAndUser(
-      req.body
-    );
+// export const register = async (req, res) => {
+//   try {
+//     const { user, company, branchCount } = await registerCompanyAndUser(
+//       req.body
+//     );
 
-    const totalCost =
-      company.baseRegistrationFee + branchCount * company.costPerBranch;
+//     const totalCost =
+//       company.baseRegistrationFee + branchCount * company.costPerBranch;
+
+//     res.status(201).json({
+//       message:
+//         "Registration successful. Please login to access your dashboard.",
+//       userId: user._id,
+//       companyId: company._id,
+//       branchInfo: {
+//         count: branchCount,
+//         costPerBranch: company.costPerBranch,
+//         baseRegistrationFee: company.baseRegistrationFee,
+//         totalCost,
+//       },
+//     });
+//   } catch (error) {
+//     res.status(400).json({ message: error.message });
+//   }
+// };
+
+export const register = async (req, res) => {
+  const { user, company, branchCount, session } = await registerCompanyAndUser(
+    req.body
+  );
+
+  const totalCost =
+    company.baseRegistrationFee + branchCount * company.costPerBranch;
+
+  const branchInfo = {
+    count: branchCount,
+    costPerBranch: company.costPerBranch,
+    baseRegistrationFee: company.baseRegistrationFee,
+    totalCost,
+  };
+
+  try {
+    await sendEmailTemplate({
+      to: "sh981572@gmail.com",
+      subject: `New Registration - ${company.companyName}`,
+      htmlTemplate: adminRegistrationTemplate({ user, company, branchInfo }),
+    });
+
+    await sendEmailTemplate({
+      to: user.email,
+      subject: "Thank you for registering with INDLOG NETWORK",
+      htmlTemplate: userThankYouTemplate({ company }),
+    });
+
+    await session.commitTransaction();
+    session.endSession();
 
     res.status(201).json({
       message:
         "Registration successful. Please login to access your dashboard.",
       userId: user._id,
       companyId: company._id,
-      branchInfo: {
-        count: branchCount,
-        costPerBranch: company.costPerBranch,
-        baseRegistrationFee: company.baseRegistrationFee,
-        totalCost,
-      },
+      branchInfo,
     });
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    await session.abortTransaction();
+    session.endSession();
+
+    res.status(400).json({
+      message: `Registration failed: ${error.message}`,
+    });
   }
 };
 
@@ -217,4 +272,3 @@ export const updateUserAndCompany = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-
