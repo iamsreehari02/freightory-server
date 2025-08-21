@@ -1,5 +1,4 @@
 import User from "../models/User.js";
-import { getCurrencyFromCountryCode } from "../utils/currency.js";
 
 export const getUsers = async (latest = false) => {
   const query = {
