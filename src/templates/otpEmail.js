@@ -49,7 +49,7 @@ export const otpEmailTemplate = `
         <div class="card">
           <div class="header">Password Reset Request</div>
           <p>Hello,</p>
-          <p>We received a request to reset your password for your Freightory account.</p>
+          <p>We received a request to reset your password for your Indlog Network account.</p>
           <p>Please use the following one-time password (OTP) to continue:</p>
           <div class="otp">{{ OTP }}</div>
           <p>This code is valid for <strong>5 minutes</strong>. Please do not share it with anyone.</p>
@@ -57,7 +57,7 @@ export const otpEmailTemplate = `
           <p class="footer">
             If you didn't request a password reset, you can safely ignore this email.
           </p>
-          <div class="brand">— Freightory Team</div>
+          <div class="brand">— Indlog Network Team</div>
         </div>
       </div>
     </body>

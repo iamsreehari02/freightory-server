@@ -17,6 +17,7 @@ const router = express.Router();
 
 router.post("/", requireAuth, RoleCheck(["nvocc"]), addContainer);
 router.get("/next-id", requireAuth, RoleCheck(["nvocc"]), fetchNextContainerId);
+
 router.get(
   "/",
   requireAuth,
@@ -24,12 +25,7 @@ router.get(
   getAllContainers
 );
 
-router.get(
-  "/company",
-  requireAuth,
-  RoleCheck(["nvocc", "admin"]),
-  getCompanyContainers
-);
+router.get("/company", requireAuth, RoleCheck(["nvocc"]), getCompanyContainers);
 
 router.patch(
   "/:id/status",

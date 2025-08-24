@@ -19,7 +19,7 @@ const companySchema = new mongoose.Schema(
     },
     costPerBranch: {
       type: Number, // in minor units like paise or cents
-      default: 5000, // e.g. 5000 paise = ₹50.00
+      default: 0, // e.g. 5000 paise = ₹50.00
       required: true,
     },
     branchCount: { type: Number, default: 0 },

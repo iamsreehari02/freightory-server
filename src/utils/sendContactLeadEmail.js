@@ -1,9 +1,15 @@
 import { sendEmailTemplate } from "../services/email.js";
 import { contactLeadEmail } from "../templates/contactLeadEmail.js";
 
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "sh981572@gmail.com";
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "admin@indlognetwork.com";
 
-export async function sendContactLeadEmail({ name, companyName, email, phone, message }) {
+export async function sendContactLeadEmail({
+  name,
+  companyName,
+  email,
+  phone,
+  message,
+}) {
   const subject = `[Contact Form] New message from ${name} (${companyName || "No Company"})`;
 
   return await sendEmailTemplate({

@@ -77,7 +77,7 @@ export async function getBranchesByCompany(companyId) {
 }
 
 export async function getLatestBranchesByCompany(companyId) {
-  return await Branch.find({ companyId }).sort({ createdAt: -1 }).limit(10);
+  return await Branch.find({ companyId }).sort({ createdAt: -1 }).limit(5);
 }
 
 export const getUpcomingRenewals = async (companyId) => {

@@ -1,15 +1,27 @@
-import { createContactLead, getAllContactLeads, getLeadById } from "../services/contactLead.js";
+import {
+  createContactLead,
+  getAllContactLeads,
+  getLeadById,
+} from "../services/contactLead.js";
 
 export async function handleContactLead(req, res) {
   try {
     const { name, companyName, email, phone, message } = req.body;
 
     if (!name || !email || !message) {
-      return res.status(400).json({ error: "Name, email and message are required" });
+      return res
+        .status(400)
+        .json({ error: "Name, email and message are required" });
     }
 
     // call service
-    const lead = await createContactLead({ name, companyName, email, phone, message });
+    const lead = await createContactLead({
+      name,
+      companyName,
+      email,
+      phone,
+      message,
+    });
 
     return res.status(201).json({
       message: "Your message has been received. We'll get back to you soon.",
@@ -21,10 +33,11 @@ export async function handleContactLead(req, res) {
   }
 }
 
-
 export async function fetchContactLeads(req, res) {
   try {
-    const leads = await getAllContactLeads();
+    const latest = req.query.latest === "true";
+
+    const leads = await getAllContactLeads(latest);
     return res.status(200).json(leads);
   } catch (err) {
     console.error("Error fetching leads:", err);
@@ -34,7 +47,7 @@ export async function fetchContactLeads(req, res) {
 
 export async function fetchLeadById(req, res) {
   try {
-    const { id } = req.params;  
+    const { id } = req.params;
     const lead = await getLeadById(id);
     if (!lead) {
       return res.status(404).json({ error: "Lead not found" });

@@ -83,55 +83,90 @@ import mongoose from "mongoose";
 //   return savedContainer;
 // };
 
-export const createContainer = async (data, user) => {
-  let port;
+export const createContainer = async (data, user, retryCount = 0) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
 
-  // Check if data.port looks like a valid ObjectId (existing port)
-  if (mongoose.Types.ObjectId.isValid(data.port)) {
-    port = await Port.findOne({
-      _id: data.port,
-      companyId: user.companyId,
-    });
-  }
+  try {
+    let port;
 
-  // If port not found, treat data.port as a new port name
-  if (!port) {
-    port = new Port({
-      name: data.port,
+    // Check if data.port is ObjectId (existing port)
+    if (mongoose.Types.ObjectId.isValid(data.port)) {
+      port = await Port.findOne(
+        {
+          _id: data.port,
+          companyId: user.companyId,
+        },
+        null,
+        { session }
+      );
+    }
+
+    // If port not found, create a new port
+    if (!port) {
+      port = new Port({
+        name: data.port,
+        country: data.country,
+        companyId: user.companyId,
+      });
+      await port.save({ session });
+    }
+
+    // Generate containerId
+    const containerId = await generateContainerId(
+      user.companyId,
+      data.country,
+      session
+    );
+
+    // Create container
+    const container = new Container({
+      containerId,
       country: data.country,
+      port: port._id,
+      unitsAvailable: data.unitsAvailable,
+      availableFrom: data.availableFrom,
+      status: data.status || "available",
+      createdBy: user._id,
       companyId: user.companyId,
+      specialRate: data.specialRate,
+      agentDetails: data.agentDetails,
     });
-    await port.save();
+
+    const savedContainer = await container.save({ session });
+
+    // Populate port after save
+    await savedContainer.populate("port");
+
+    // Log activity
+    await logContainerActivity(
+      {
+        companyId: user.companyId,
+        containerId: savedContainer._id,
+        action: "created",
+        message: `Container ${containerId} created at ${port.name} port`,
+        createdBy: user._id,
+      },
+      session
+    );
+
+    await session.commitTransaction();
+    session.endSession();
+
+    return savedContainer;
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+
+    if (error.code === 11000 && retryCount < 3) {
+      console.log(
+        `Duplicate containerId detected. Retrying... Attempt ${retryCount + 1}`
+      );
+      return createContainer(data, user, retryCount + 1);
+    }
+
+    throw error;
   }
-
-  const containerId = await generateContainerId(data.country, user.companyId);
-
-  const container = new Container({
-    containerId,
-    country: data.country,
-    port: port._id,
-    unitsAvailable: data.unitsAvailable,
-    availableFrom: data.availableFrom,
-    status: data.status || "available",
-    createdBy: user._id,
-    companyId: user.companyId,
-    specialRate: data.specialRate,
-    agentDetails: data.agentDetails,
-  });
-
-  const savedContainer = await container.save();
-
-  await savedContainer.populate("port");
-
-  await logContainerActivity({
-    companyId: user.companyId,
-    containerId: savedContainer._id,
-    action: "created",
-    message: `Container ${containerId} created at ${port.name} port`,
-    createdBy: user._id,
-  });
-
-  return savedContainer;
 };
 
 export const getNextContainerId = async (userId) => {
@@ -175,13 +210,13 @@ export const updateContainerStatus = async (id, status, companyId) => {
 
 //   return { total, available, inUse, maintenance };
 // };
-export const getAllContainerLogsService = async (companyId) => {
+export const getAllContainerLogsService = async (companyId = null) => {
   const logs = await ContainerLog.find()
     .populate("createdBy", "name")
     .populate({
       path: "containerId",
-      match: { companyId }, // filter by company
-      select: "containerId port",
+      match: companyId ? { companyId } : {},
+      select: "containerId port companyId",
       populate: {
         path: "port",
         select: "name country",
@@ -189,8 +224,8 @@ export const getAllContainerLogsService = async (companyId) => {
     })
     .sort({ createdAt: -1 });
 
-  // Remove logs with null containerId (those not matching the company)
-  return logs.filter((log) => log.containerId);
+  // If companyId is provided → filter out logs from other companies
+  return companyId ? logs.filter((log) => log.containerId) : logs;
 };
 
 export const getLatestContainers = async (companyId, skip = 0, limit = 20) => {
@@ -218,10 +253,49 @@ export const getContainerByIdService = async (id, companyId) => {
     });
 };
 
-export async function softDeleteContainer(id, companyId) {
-  return Container.findOneAndUpdate(
-    { _id: id, companyId },
-    { isDeleted: true, deletedAt: new Date() },
-    { new: true }
-  );
+// export async function softDeleteContainer(id, companyId) {
+//   return Container.findOneAndUpdate(
+//     { _id: id, companyId },
+//     { isDeleted: true, deletedAt: new Date() },
+//     { new: true }
+//   );
+// }
+
+export async function softDeleteContainer(id, companyId, userId) {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    // Soft delete the container
+    const container = await Container.findOneAndUpdate(
+      { _id: id, companyId },
+      { isDeleted: true, deletedAt: new Date() },
+      { new: true, session }
+    );
+
+    if (!container) {
+      throw new Error("Container not found or already deleted");
+    }
+
+    // Log the deletion in ContainerLog
+    await logContainerActivity(
+      {
+        companyId,
+        containerId: container._id,
+        action: "removed",
+        message: `Container ${container.containerId} was removed`,
+        createdBy: userId,
+      },
+      session // pass session for transaction
+    );
+
+    await session.commitTransaction();
+    session.endSession();
+
+    return container;
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    throw error;
+  }
 }

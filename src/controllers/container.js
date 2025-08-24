@@ -92,8 +92,17 @@ export const handleUpdateContainerStatus = async (req, res) => {
 
 export const handleGetAllContainerLogs = async (req, res) => {
   try {
-    const companyId = req.user.companyId;
-    const logs = await getAllContainerLogsService(companyId);
+    const { role, companyId } = req.user;
+
+    let logs;
+    if (role === "admin") {
+      // Admin can see all company container logs
+      logs = await getAllContainerLogsService();
+    } else {
+      // Normal users see only their company's logs
+      logs = await getAllContainerLogsService(companyId);
+    }
+
     res.status(200).json(logs);
   } catch (error) {
     console.error("Error fetching container logs:", error);
@@ -104,7 +113,7 @@ export const handleGetAllContainerLogs = async (req, res) => {
 export const getLatestContainersController = async (req, res) => {
   try {
     const skip = parseInt(req.query.skip) || 0;
-    const limit = parseInt(req.query.limit) || 20;
+    const limit = parseInt(req.query.limit) || 5;
 
     const companyId = req.user.companyId;
 

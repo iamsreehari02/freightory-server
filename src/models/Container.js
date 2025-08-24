@@ -10,7 +10,6 @@ const containerSchema = new mongoose.Schema(
     containerId: {
       type: String,
       required: true,
-      unique: true,
     },
     country: {
       type: String,
@@ -50,6 +49,8 @@ const containerSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+containerSchema.index({ companyId: 1, containerId: 1 }, { unique: true });
 
 export const Container =
   mongoose.models.Container || mongoose.model("Container", containerSchema);

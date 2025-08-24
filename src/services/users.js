@@ -6,13 +6,7 @@ export const getUsers = async (latest = false) => {
     role: { $ne: "admin" },
   };
 
-  if (latest) {
-    query.createdAt = {
-      $gte: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
-    };
-  }
-
-  const users = await User.find(query, "-password")
+  let findQuery = User.find(query, "-password")
     .populate({
       path: "companyId",
       select: `
@@ -30,17 +24,21 @@ export const getUsers = async (latest = false) => {
         currency
       `,
     })
+    .sort({ createdAt: -1 })
     .lean();
+
+  // If latest = true → fetch only the last 5 users
+  if (latest) {
+    findQuery = findQuery.sort({ createdAt: -1 }).limit(5);
+  }
+
+  const users = await findQuery;
 
   const enrichedUsers = await Promise.all(
     users.map(async (user) => {
       let company = null;
 
       if (user.companyId) {
-        // const { currencyCode, symbol } = await getCurrencyFromCountryCode(
-        //   user.companyId.country
-        // );
-
         company = {
           _id: user.companyId._id,
           name: user.companyId.companyName,
@@ -51,6 +49,7 @@ export const getUsers = async (latest = false) => {
           pinCode: user.companyId.pinCode,
           freightType: user.companyId.freightType,
           costPerBranch: user.companyId.costPerBranch,
+          branchCount: user.companyId.branchCount || 0,
           baseRegistrationFee: user.companyId.baseRegistrationFee,
           totalRegistrationCost: user.companyId.totalRegistrationCost,
           currency: user.companyId.currency,

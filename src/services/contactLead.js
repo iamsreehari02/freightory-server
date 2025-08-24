@@ -1,7 +1,13 @@
 import ContactLead from "../models/ContactLead.js";
 import { sendContactLeadEmail } from "../utils/sendContactLeadEmail.js";
 
-export async function createContactLead({ name, companyName, email, phone, message }) {
+export async function createContactLead({
+  name,
+  companyName,
+  email,
+  phone,
+  message,
+}) {
   await sendContactLeadEmail({ name, companyName, email, phone, message });
 
   const lead = await ContactLead.create({
@@ -15,9 +21,14 @@ export async function createContactLead({ name, companyName, email, phone, messa
   return lead;
 }
 
+export async function getAllContactLeads(latest = false) {
+  const query = ContactLead.find().sort({ createdAt: -1 });
 
-export async function getAllContactLeads() {
-  return await ContactLead.find().sort({ createdAt: -1 }); 
+  if (latest) {
+    query.limit(5);
+  }
+
+  return await query.exec();
 }
 
 export async function getLeadById(id) {

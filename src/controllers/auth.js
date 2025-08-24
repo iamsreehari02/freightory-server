@@ -19,7 +19,7 @@ import {
   userThankYouTemplate,
 } from "../templates/register.js";
 
-const admin_email = process.env.ADMIN_EMAIL || "sh981572@gmail.com";
+const admin_email = process.env.ADMIN_EMAIL || "admin@indlognetwork.com";
 
 export const signup = async (req, res) => {
   const { email, password } = req.body;
@@ -124,6 +124,14 @@ export const getMe = async (req, res) => {
     const company = await Company.findById(user.companyId);
     if (!company) return res.status(404).json({ message: "Company not found" });
 
+    // if (user.isSuspended) {
+    //   return res.status(403).json({
+    //     message: "Your account is suspended. Please contact support.",
+    //     user,
+    //     company,
+    //   });
+    // }
+
     res.status(200).json({
       user,
       company,
@@ -161,24 +169,90 @@ export const getMe = async (req, res) => {
 //   }
 // };
 
+// export const register = async (req, res) => {
+//   let session; // track session so we can abort if needed
+//   try {
+//     const {
+//       user,
+//       company,
+//       branchCount,
+//       session: regSession,
+//     } = await registerCompanyAndUser(req.body);
+//     session = regSession;
+
+//     const totalCost =
+//       company.baseRegistrationFee + branchCount * company.costPerBranch;
+
+//     const branchInfo = {
+//       count: branchCount,
+//       costPerBranch: company.costPerBranch,
+//       baseRegistrationFee: company.baseRegistrationFee,
+//       totalCost,
+//     };
+
+//     // send emails
+//     await sendEmailTemplate({
+//       to: "admin@indlognetwork.com",
+//       subject: `New Registration - ${company.companyName}`,
+//       htmlTemplate: adminRegistrationTemplate({ user, company, branchInfo }),
+//     });
+
+//     await sendEmailTemplate({
+//       to: user.email,
+//       subject: "Thank you for registering with INDLOG NETWORK",
+//       htmlTemplate: userThankYouTemplate({ company }),
+//     });
+
+//     await session.commitTransaction();
+//     session.endSession();
+
+//     res.status(201).json({
+//       message:
+//         "Registration successful. Please login to access your dashboard.",
+//       userId: user._id,
+//       companyId: company._id,
+//       branchInfo,
+//     });
+//   } catch (error) {
+//     if (session) {
+//       await session.abortTransaction();
+//       session.endSession();
+//     }
+//     res.status(400).json({
+//       message: error.message || "Registration failed",
+//     });
+//   }
+// };
+
 export const register = async (req, res) => {
-  const { user, company, branchCount, session } = await registerCompanyAndUser(
-    req.body
-  );
-
-  const totalCost =
-    company.baseRegistrationFee + branchCount * company.costPerBranch;
-
-  const branchInfo = {
-    count: branchCount,
-    costPerBranch: company.costPerBranch,
-    baseRegistrationFee: company.baseRegistrationFee,
-    totalCost,
-  };
-
+  let session;
   try {
+    const {
+      user,
+      company,
+      branchCount,
+      session: regSession,
+    } = await registerCompanyAndUser(req.body);
+    session = regSession;
+
+    let branchInfo = null;
+
+    // Only include branch info if branchCount > 0
+    if (branchCount > 0) {
+      const totalCost =
+        company.baseRegistrationFee + branchCount * company.costPerBranch;
+
+      branchInfo = {
+        count: branchCount,
+        costPerBranch: company.costPerBranch,
+        baseRegistrationFee: company.baseRegistrationFee,
+        totalCost,
+      };
+    }
+
+    // send emails
     await sendEmailTemplate({
-      to: "sh981572@gmail.com",
+      to: "admin@indlognetwork.com",
       subject: `New Registration - ${company.companyName}`,
       htmlTemplate: adminRegistrationTemplate({ user, company, branchInfo }),
     });
@@ -186,7 +260,7 @@ export const register = async (req, res) => {
     await sendEmailTemplate({
       to: user.email,
       subject: "Thank you for registering with INDLOG NETWORK",
-      htmlTemplate: userThankYouTemplate({ company }),
+      htmlTemplate: userThankYouTemplate({ company, branchInfo }),
     });
 
     await session.commitTransaction();
@@ -197,14 +271,15 @@ export const register = async (req, res) => {
         "Registration successful. Please login to access your dashboard.",
       userId: user._id,
       companyId: company._id,
-      branchInfo,
+      ...(branchInfo && { branchInfo }), // Only include if exists
     });
   } catch (error) {
-    await session.abortTransaction();
-    session.endSession();
-
+    if (session) {
+      await session.abortTransaction();
+      session.endSession();
+    }
     res.status(400).json({
-      message: `Registration failed: ${error.message}`,
+      message: error.message || "Registration failed",
     });
   }
 };
