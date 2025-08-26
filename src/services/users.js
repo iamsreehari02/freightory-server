@@ -156,3 +156,18 @@ export const deleteUser = async (userId) => {
 export const suspendUser = async (userId, suspend = true) => {
   return await User.findByIdAndUpdate(userId, { isSuspended: suspend });
 };
+
+export const getAllFreightForwarders = async () => {
+  try {
+    const freightForwarders = await User.find({
+      role: "freight_forwarder",
+      isDeleted: false,
+      isSuspended: false,
+    }).select("email"); // Only fetch email
+
+    return freightForwarders;
+  } catch (error) {
+    console.error("Error fetching freight forwarders:", error);
+    throw new Error("Failed to fetch freight forwarders");
+  }
+};

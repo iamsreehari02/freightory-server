@@ -52,6 +52,7 @@ export const login = async (req, res) => {
       userId: user.id,
       role: user.role,
       companyId: user.companyId,
+      companyName: user.companyName,
     });
     setTokenCookie(res, token);
 
@@ -224,6 +225,72 @@ export const getMe = async (req, res) => {
 //   }
 // };
 
+// export const register = async (req, res) => {
+//   let session;
+//   try {
+//     const {
+//       user,
+//       company,
+//       branchCount,
+//       session: regSession,
+//     } = await registerCompanyAndUser(req.body);
+//     session = regSession;
+
+//     let branchInfo = null;
+
+//     // Only include branch info if branchCount > 0
+//     if (branchCount > 0) {
+//       const totalCost =
+//         company.baseRegistrationFee + branchCount * company.costPerBranch;
+
+//       let branchInfo = null;
+
+//       if (branchCount > 0) {
+//         branchInfo = {
+//           count: branchCount,
+//           costPerBranch: company.costPerBranch,
+//           baseRegistrationFee: company.baseRegistrationFee,
+//           totalCost:
+//             company.baseRegistrationFee + branchCount * company.costPerBranch,
+//         };
+//       }
+//     }
+
+//     // send emails
+//     await sendEmailTemplate({
+//       to: "admin@indlognetwork.com",
+//       subject: `New Registration - ${company.companyName}`,
+//       htmlTemplate: adminRegistrationTemplate({ user, company, branchInfo }),
+//     });
+
+//     await sendEmailTemplate({
+//       to: user.email,
+//       subject: "Thank you for registering with INDLOG NETWORK",
+//       htmlTemplate: userThankYouTemplate({ company, branchInfo }),
+//     });
+
+//     await session.commitTransaction();
+//     session.endSession();
+
+//     res.status(201).json({
+//       message: "Registration successful. Please proceed to payment.",
+
+//       userId: user._id,
+//       companyId: company._id,
+//       totalCost: company.totalRegistrationCost,
+//       ...(branchInfo && { branchInfo }), // Only include if exists
+//     });
+//   } catch (error) {
+//     if (session) {
+//       await session.abortTransaction();
+//       session.endSession();
+//     }
+//     res.status(400).json({
+//       message: error.message || "Registration failed",
+//     });
+//   }
+// };
+
 export const register = async (req, res) => {
   let session;
   try {
@@ -233,53 +300,70 @@ export const register = async (req, res) => {
       branchCount,
       session: regSession,
     } = await registerCompanyAndUser(req.body);
+
     session = regSession;
 
-    let branchInfo = null;
+    // 🔎 debug
+    console.log("[REGISTER] branchCount:", branchCount);
+    console.log("[REGISTER] baseRegistrationFee:", company.baseRegistrationFee);
+    console.log("[REGISTER] costPerBranch:", company.costPerBranch);
 
-    // Only include branch info if branchCount > 0
-    if (branchCount > 0) {
-      const totalCost =
-        company.baseRegistrationFee + branchCount * company.costPerBranch;
+    // ✅ ALWAYS pass an object so templates never explode
+    const branchInfo = {
+      hasBranches: branchCount > 0,
+      count: branchCount || 0,
+      costPerBranch: company?.costPerBranch || 0,
+      baseRegistrationFee: company?.baseRegistrationFee || 0,
+      totalCost:
+        (company?.baseRegistrationFee || 0) +
+        (branchCount || 0) * (company?.costPerBranch || 0),
+    };
 
-      branchInfo = {
-        count: branchCount,
-        costPerBranch: company.costPerBranch,
-        baseRegistrationFee: company.baseRegistrationFee,
-        totalCost,
-      };
+    // Wrap each email in its own try so you see exactly which one fails
+    try {
+      await sendEmailTemplate({
+        to: "admin@indlognetwork.com",
+        subject: `New Registration - ${company.companyName}`,
+        htmlTemplate: adminRegistrationTemplate({ user, company, branchInfo }),
+      });
+      console.log("[REGISTER] Admin email sent");
+    } catch (e) {
+      console.error("[REGISTER] Admin email error:", e?.message, e?.stack);
+      throw e; // rethrow so it hits your catch and shows in the response
     }
 
-    // send emails
-    await sendEmailTemplate({
-      to: "admin@indlognetwork.com",
-      subject: `New Registration - ${company.companyName}`,
-      htmlTemplate: adminRegistrationTemplate({ user, company, branchInfo }),
-    });
-
-    await sendEmailTemplate({
-      to: user.email,
-      subject: "Thank you for registering with INDLOG NETWORK",
-      htmlTemplate: userThankYouTemplate({ company, branchInfo }),
-    });
+    try {
+      await sendEmailTemplate({
+        to: user.email,
+        subject: "Thank you for registering with INDLOG NETWORK",
+        htmlTemplate: userThankYouTemplate({ company, branchInfo }),
+      });
+      console.log("[REGISTER] User email sent");
+    } catch (e) {
+      console.error("[REGISTER] User email error:", e?.message, e?.stack);
+      throw e;
+    }
 
     await session.commitTransaction();
     session.endSession();
 
-    res.status(201).json({
-      message:
-        "Registration successful. Please login to access your dashboard.",
+    return res.status(201).json({
+      success: true,
+      message: "Registration successful. Please proceed to payment.",
       userId: user._id,
       companyId: company._id,
-      ...(branchInfo && { branchInfo }), // Only include if exists
+      totalCost: company.totalRegistrationCost,
+      // if you only want to return when branches exist:
+      ...(branchInfo.hasBranches ? { branchInfo } : {}),
     });
   } catch (error) {
     if (session) {
       await session.abortTransaction();
       session.endSession();
     }
-    res.status(400).json({
-      message: error.message || "Registration failed",
+    console.error("[REGISTER] Error:", error?.message, error?.stack);
+    return res.status(400).json({
+      message: error?.message || "Registration failed",
     });
   }
 };

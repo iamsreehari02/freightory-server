@@ -19,7 +19,6 @@ export function adminRegistrationTemplate({ user, company, branchInfo }) {
       <li><strong>Country:</strong> ${company.country}</li>
       <li><strong>PIN Code:</strong> ${company.pinCode}</li>
       <li><strong>Freight Type:</strong> ${company.freightType}</li>
-      <li><strong>GST No:</strong> ${company.gstNo || "N/A"}</li>
     </ul>
 
     <h3>Branch & Cost Info</h3>

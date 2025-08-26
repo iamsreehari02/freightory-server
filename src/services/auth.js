@@ -22,11 +22,15 @@ export const loginUser = async (email, password) => {
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) throw new Error("Invalid credentials");
 
+  const company = await Company.findById(user.companyId).select("companyName");
+  if (!company) throw new Error("Company not found");
+
   return {
     id: user._id,
     email: user.email,
     role: user.role,
     companyId: user.companyId,
+    companyName: company.companyName,
   };
 };
 
@@ -47,7 +51,6 @@ export const registerCompanyAndUser = async (data) => {
       freightType,
       password,
       branchCount = 1,
-      gstNo,
     } = data;
 
     const existingUser = await User.findOne({ email }).session(session);
@@ -91,7 +94,7 @@ export const registerCompanyAndUser = async (data) => {
           baseRegistrationFee,
           costPerBranch: costPerBranchInMinor,
           totalRegistrationCost: totalCost,
-          gstNo,
+          paymentStatus: "pending",
         },
       ],
       { session }

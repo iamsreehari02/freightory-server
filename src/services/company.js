@@ -36,3 +36,38 @@ export async function getCompanyById(id) {
     throw new Error("Failed to fetch company: " + error.message);
   }
 }
+
+export const getPaymentSummaryService = async (companyId) => {
+  // Get company details
+  const company = await Company.findById(companyId);
+
+  if (!company) {
+    throw new Error("Company not found");
+  }
+
+  // Calculate total cost dynamically if not stored
+  const branchCount = company.branchCount || 0;
+  const totalCost =
+    company.baseRegistrationFee + branchCount * company.costPerBranch;
+
+  // If `totalRegistrationCost` isn't saved, save it once
+  if (
+    !company.totalRegistrationCost ||
+    company.totalRegistrationCost !== totalCost
+  ) {
+    company.totalRegistrationCost = totalCost;
+    await company.save();
+  }
+
+  return {
+    companyId: company._id,
+    companyName: company.companyName,
+    currency: company.currency,
+    baseRegistrationFee: company.baseRegistrationFee,
+    costPerBranch: company.costPerBranch,
+    branchCount,
+    totalCost,
+    paymentStatus: company.paymentStatus,
+    paymentDetails: company.paymentDetails || {},
+  };
+};

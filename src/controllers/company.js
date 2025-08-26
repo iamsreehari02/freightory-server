@@ -1,4 +1,8 @@
-import { getAllCompanies, getCompanyById } from "../services/company.js";
+import {
+  getAllCompanies,
+  getCompanyById,
+  getPaymentSummaryService,
+} from "../services/company.js";
 
 export async function fetchCompanies(req, res) {
   try {
@@ -35,3 +39,29 @@ export async function fetchCompanyById(req, res) {
     });
   }
 }
+
+export const getPaymentSummary = async (req, res) => {
+  try {
+    const companyId = req.query.companyId;
+
+    if (!companyId) {
+      return res.status(400).json({
+        success: false,
+        message: "Company ID missing from session",
+      });
+    }
+
+    const paymentSummary = await getPaymentSummaryService(companyId);
+
+    return res.status(200).json({
+      success: true,
+      data: paymentSummary,
+    });
+  } catch (error) {
+    console.error("❌ Error in getPaymentSummary:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Something went wrong while fetching payment summary",
+    });
+  }
+};

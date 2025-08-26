@@ -31,7 +31,18 @@ const companySchema = new mongoose.Schema(
     totalRegistrationCost: {
       type: Number, // in minor units
     },
-    gstNo: { type: String },
+
+    paymentStatus: {
+      type: String,
+      enum: ["pending", "completed", "failed"],
+      default: "pending",
+    },
+    paymentDetails: {
+      orderId: { type: String },
+      transactionId: { type: String },
+      payerId: { type: String },
+      payerEmail: { type: String },
+    },
 
     isDeleted: {
       type: Boolean,

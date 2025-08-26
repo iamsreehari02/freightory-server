@@ -1,4 +1,6 @@
+import Company from "../models/Company.js";
 import { Container } from "../models/Container.js";
+// import { bulkEmailQueue } from "../queues/bulkEmailQueue.js";
 import {
   createContainer,
   getAllContainerLogsService,
@@ -8,6 +10,23 @@ import {
   softDeleteContainer,
   updateContainerStatus,
 } from "../services/container.js";
+import { sendEmailTemplate } from "../services/email.js";
+import { getAllFreightForwarders } from "../services/users.js";
+import { containerEmailTemplate } from "../templates/containerCreatedTemplate.js";
+
+// export const addContainer = async (req, res) => {
+//   try {
+//     const container = await createContainer(req.body, {
+//       _id: req.user.userId,
+//       companyId: req.user.companyId,
+//       country: req.body.country,
+//     });
+
+//     res.status(201).json(container);
+//   } catch (err) {
+//     res.status(400).json({ message: err.message });
+//   }
+// };
 
 export const addContainer = async (req, res) => {
   try {
@@ -18,7 +37,33 @@ export const addContainer = async (req, res) => {
     });
 
     res.status(201).json(container);
+
+    const freightForwarders = await getAllFreightForwarders();
+
+    if (freightForwarders.length === 0) {
+      console.warn("No freight forwarders found to send emails");
+      return;
+    }
+
+    for (const ff of freightForwarders) {
+      const htmlTemplate = containerEmailTemplate({
+        containerNumber: container.containerId,
+        origin: container.port?.name || "N/A",
+        destination: container.country || "N/A",
+        createdBy: req.user.companyName,
+        agentDetails: container.agentDetails || "N/A",
+      });
+
+      sendEmailTemplate({
+        to: ff.email,
+        subject: "New Container Created",
+        htmlTemplate,
+      }).catch((err) => {
+        console.error(`Failed to send email to ${ff.email}:`, err.message);
+      });
+    }
   } catch (err) {
+    console.error("Error creating container:", err);
     res.status(400).json({ message: err.message });
   }
 };
