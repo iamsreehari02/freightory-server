@@ -12,6 +12,7 @@ import branchRoutes from "./branch.js";
 import companyRoutes from "./company.js";
 import bankRoutes from "./bank.js";
 import paymentProofRoutes from "./paymentProof.js";
+import transactionRoutes from "./transactions.js";
 
 const router = express.Router();
 
@@ -28,5 +29,6 @@ router.use("/branch", branchRoutes);
 router.use("/companies", companyRoutes);
 router.use("/bank", bankRoutes);
 router.use("/payment-proof", paymentProofRoutes);
+router.use("/transactions", transactionRoutes);
 
 export default router;

@@ -34,6 +34,108 @@ export const loginUser = async (email, password) => {
   };
 };
 
+// export const registerCompanyAndUser = async (data) => {
+//   const session = await mongoose.startSession();
+//   session.startTransaction();
+
+//   try {
+//     const {
+//       companyName,
+//       contactPerson,
+//       phone,
+//       email,
+//       website,
+//       headOfficeAddress,
+//       country,
+//       pinCode,
+//       freightType,
+//       password,
+//       branchCount = 1,
+//     } = data;
+
+//     const existingUser = await User.findOne({ email }).session(session);
+//     if (existingUser) throw new Error("Email already in use");
+
+//     const currency = getCurrencyCodeFromCountry(country);
+
+//     let baseFee = 0;
+//     let costPerBranch = 0;
+//     let finalBranchCount = branchCount;
+
+//     const normalizedFreightType = freightType
+//       .toLowerCase()
+//       .replace(/\s+/g, "_");
+
+//     if (normalizedFreightType === "freight_forwarder") {
+//       baseFee = 10000;
+//       costPerBranch = 5000;
+//     } else if (normalizedFreightType === "nvocc") {
+//       baseFee = 20000;
+//       costPerBranch = 0;
+//       finalBranchCount = 0;
+//     }
+
+//     const baseRegistrationFee = baseFee; // already in paisa or cents
+//     const costPerBranchInMinor = costPerBranch; // already in minor units
+//     const totalCost =
+//       baseRegistrationFee + finalBranchCount * costPerBranchInMinor;
+
+//     const [company] = await Company.create(
+//       [
+//         {
+//           companyName,
+//           contactPerson,
+//           website,
+//           headOfficeAddress,
+//           country,
+//           pinCode,
+//           freightType: normalizedFreightType,
+//           currency,
+//           baseRegistrationFee,
+//           costPerBranch: costPerBranchInMinor,
+//           totalRegistrationCost: totalCost,
+//           paymentStatus: "pending",
+//         },
+//       ],
+//       { session }
+//     );
+
+//     if (finalBranchCount > 0) {
+//       const branchesToCreate = Array.from({ length: finalBranchCount }).map(
+//         () => ({ companyId: company._id })
+//       );
+//       await Branch.insertMany(branchesToCreate, { session });
+//     }
+
+//     const hashedPassword = await bcrypt.hash(password, 12);
+
+//     const [user] = await User.create(
+//       [
+//         {
+//           companyId: company._id,
+//           email,
+//           phone,
+//           password: hashedPassword,
+//           role: normalizedFreightType,
+//         },
+//       ],
+//       { session }
+//     );
+
+//     // Instead of committing here, return session so emails can be sent first
+//     return {
+//       user,
+//       company,
+//       branchCount: finalBranchCount,
+//       session,
+//     };
+//   } catch (error) {
+//     await session.abortTransaction();
+//     session.endSession();
+//     throw error;
+//   }
+// };
+
 export const registerCompanyAndUser = async (data) => {
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -50,36 +152,43 @@ export const registerCompanyAndUser = async (data) => {
       pinCode,
       freightType,
       password,
-      branchCount = 1,
+      branchCount = 0, // default 0
     } = data;
 
+    // Check if user already exists
     const existingUser = await User.findOne({ email }).session(session);
     if (existingUser) throw new Error("Email already in use");
 
     const currency = getCurrencyCodeFromCountry(country);
+
+    // Determine if India or not
+    const isIndia = country?.toLowerCase() === "india";
 
     let baseFee = 0;
     let costPerBranch = 0;
     let finalBranchCount = branchCount;
 
     const normalizedFreightType = freightType
-      .toLowerCase()
+      ?.toLowerCase()
       .replace(/\s+/g, "_");
 
+    // Calculate fees based on freight type & country
     if (normalizedFreightType === "freight_forwarder") {
-      baseFee = 10000;
-      costPerBranch = 5000;
+      baseFee = isIndia ? 10000 : 100; // already in minor units? use *100 if not
+      costPerBranch = isIndia ? 5000 : 50;
     } else if (normalizedFreightType === "nvocc") {
-      baseFee = 20000;
+      baseFee = isIndia ? 20000 : 200;
       costPerBranch = 0;
-      finalBranchCount = 0;
+      finalBranchCount = 0; // no branches for NVOCC
     }
 
+    // Convert to minor units (paisa/cents)
     const baseRegistrationFee = baseFee * 100;
     const costPerBranchInMinor = costPerBranch * 100;
     const totalCost =
       baseRegistrationFee + finalBranchCount * costPerBranchInMinor;
 
+    // Create company
     const [company] = await Company.create(
       [
         {
@@ -100,6 +209,7 @@ export const registerCompanyAndUser = async (data) => {
       { session }
     );
 
+    // Create branches if needed
     if (finalBranchCount > 0) {
       const branchesToCreate = Array.from({ length: finalBranchCount }).map(
         () => ({ companyId: company._id })
@@ -107,6 +217,7 @@ export const registerCompanyAndUser = async (data) => {
       await Branch.insertMany(branchesToCreate, { session });
     }
 
+    // Hash password & create user
     const hashedPassword = await bcrypt.hash(password, 12);
 
     const [user] = await User.create(
@@ -122,7 +233,6 @@ export const registerCompanyAndUser = async (data) => {
       { session }
     );
 
-    // Instead of committing here, return session so emails can be sent first
     return {
       user,
       company,

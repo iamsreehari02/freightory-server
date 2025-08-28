@@ -40,8 +40,6 @@ const companySchema = new mongoose.Schema(
     paymentDetails: {
       orderId: { type: String },
       transactionId: { type: String },
-      payerId: { type: String },
-      payerEmail: { type: String },
     },
 
     isDeleted: {

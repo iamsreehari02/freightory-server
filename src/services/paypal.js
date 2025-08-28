@@ -4,9 +4,11 @@ const base = process.env.PAYPAL_API_BASE; // https://api-m.sandbox.paypal.com or
 const clientId = process.env.PAYPAL_CLIENT_ID;
 const clientSecret = process.env.PAYPAL_CLIENT_SECRET;
 
-// 🔑 Get OAuth2 token
+// Get OAuth2 token
 async function getAccessToken() {
-  const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
+  const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString(
+    "base64"
+  );
 
   const { data } = await axios.post(
     `${base}/v1/oauth2/token`,
@@ -23,7 +25,6 @@ async function getAccessToken() {
 }
 
 export async function createOrder(amount, currency = "USD") {
-
   const token = await getAccessToken();
 
   const { data } = await axios.post(
