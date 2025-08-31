@@ -1,8 +1,8 @@
 import TransactionCounter from "../models/TransactionCounter.js";
 
-export async function getNextTransactionNumber(companyId, increment = false) {
+export async function getNextTransactionNumber(increment = false) {
   const result = await TransactionCounter.findOneAndUpdate(
-    { companyId },
+    {}, // Remove companyId filter - this makes it global
     increment ? { $inc: { lastNumber: 1 } } : {},
     { upsert: true, new: true }
   );

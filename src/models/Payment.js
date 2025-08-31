@@ -17,7 +17,7 @@ const paymentSchema = new mongoose.Schema(
       required: true,
     },
     captureId: {
-      type: String, // from PayPal capture response
+      type: String,
     },
     payerEmail: {
       type: String,

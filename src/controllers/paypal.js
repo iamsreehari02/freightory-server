@@ -2,14 +2,15 @@ import Company from "../models/Company.js";
 import Transaction from "../models/Transaction.js";
 import { sendEmailTemplate } from "../services/email.js";
 import { createOrder, captureOrder } from "../services/paypal.js";
-import { uploadPDFToCloudinary } from "../services/uploadPDF.js";
-import { generateInvoiceTemplate } from "../templates/invoiceTemplate.js";
+import { uploadPDFBufferToCloudinary } from "../services/uploadPDF.js";
+// import { generateInvoiceTemplate } from "../templates/invoiceTemplate.js";
 import { getNextTransactionNumber } from "../utils/transactionCounter.js";
 import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
-import { generatePDF } from "../utils/pdfGenerator.js";
+import { generatePDFBuffer } from "../utils/pdfGenerator.js";
 import User from "../models/User.js";
+import { formatCurrency } from "../utils/currency.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -221,8 +222,6 @@ export async function createPayPalOrder(req, res) {
 // }
 
 export async function capturePayPalOrder(req, res) {
-  let pdfPath = null;
-
   try {
     const { orderID, companyId } = req.body;
 
@@ -249,67 +248,68 @@ export async function capturePayPalOrder(req, res) {
         { new: true }
       );
 
-      // Create transaction
+      const currency = updatedCompany.currency || "$";
+
+      const formattedAmount = formatCurrency(
+        updatedCompany.totalRegistrationCost,
+        currency
+      );
+
       let transaction = await Transaction.create({
         transactionNumber: "",
         transactionId: captureData.id,
         company: companyId,
-        companyName: updatedCompany.companyName,
         country: updatedCompany.country,
-        amount: captureData.amount.value,
+        amount: updatedCompany.totalRegistrationCost,
         paymentMode: "online",
         status: capture.status.toLowerCase(),
         createdAt: new Date(),
       });
 
-      const transactionNumber = await getNextTransactionNumber(companyId, true);
+      const transactionNumber = await getNextTransactionNumber(true);
       transaction.transactionNumber = transactionNumber;
 
-      // Generate PDF Invoice
-      const html = generateInvoiceTemplate({
+      const invoiceData = {
         companyName: updatedCompany.companyName,
         transactionNumber,
         transactionId: captureData.id,
-        amount: captureData.amount.value,
+        amount: updatedCompany.totalRegistrationCost,
+        currency: updatedCompany.currency,
         country: updatedCompany.country,
+        headOfficeAddress: updatedCompany.headOfficeAddress,
+        pinCode: updatedCompany.pinCode,
+        website: updatedCompany.website,
         date: new Date().toLocaleDateString(),
-      });
+        baseRegistrationFee: updatedCompany.baseRegistrationFee || 0,
+        branchCount: updatedCompany.branchCount || 0,
+        costPerBranch: updatedCompany.costPerBranch || 0,
+        totalRegistrationCost: updatedCompany.totalRegistrationCost || 0,
+      };
 
-      pdfPath = path.join("tmp", `invoice-${transactionNumber}.pdf`);
-      await generatePDF(html, pdfPath);
+      let pdfBuffer = await generatePDFBuffer(invoiceData);
 
-      // ✅ Upload to Cloudinary (returns public_id)
-      const uploadResult = await uploadPDFToCloudinary(pdfPath);
-      pdfPath = null; // File deleted in upload function
+      if (!(pdfBuffer instanceof Buffer)) {
+        pdfBuffer = Buffer.from(pdfBuffer);
+      }
 
-      // ✅ Store Cloudinary details instead of URL
-      transaction.invoicePublicId = uploadResult.public_id;
-      transaction.invoiceFormat = uploadResult.format;
-
-      // ✅ Create permanent download URL through your API
-      const permanentDownloadUrl = `${process.env.BASE_URL}/api/invoice/download/${transactionNumber}`;
-      transaction.invoiceUrl = permanentDownloadUrl; // For backward compatibility
-
+      transaction.invoicePdf = pdfBuffer;
       await transaction.save();
+      const user = await User.findOne({ companyId }).select("email name");
 
-      const user = await User.findOne({ companyId: companyId }).select(
-        "email name"
-      );
-
-      if (!user) {
-        console.error("No user found for company:", companyId);
-      } else {
+      if (user) {
         await sendEmailTemplate({
           to: user.email,
           subject: "Your Payment Invoice",
           htmlTemplate: `
-            <p>Hi ${user.name || updatedCompany.companyName},</p>
-            <p>Thanks for your payment of ₹${transaction.amount}.</p>
-            <p>You can download your invoice here:</p>
-            <a href="${permanentDownloadUrl}" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Download Invoice</a>
-            <br><br>
-            <p>Regards,<br/>INDLOG NETWORK</p>
-          `,
+      <p>Hi ${user.name || updatedCompany.companyName},</p>
+      <p>Thanks for your payment of ${formattedAmount}.</p>
+      <p>You can download your invoice here:</p>
+      <a href="${process.env.BACKEND_URL}/api/transactions/${transaction.transactionId}/invoice">
+        Download Invoice
+      </a>
+      <br><br>
+      <p>Regards,<br/>INDLOG NETWORK</p>
+    `,
         });
       }
 
@@ -317,23 +317,13 @@ export async function capturePayPalOrder(req, res) {
         success: true,
         company: updatedCompany,
         transaction,
-        invoiceUrl: permanentDownloadUrl,
+        invoiceUrl: transaction.invoiceUrl,
       });
     }
 
     return res.status(400).json({ success: false, capture });
   } catch (err) {
     console.error("PayPal captureOrder error:", err);
-
-    // Cleanup PDF if it still exists
-    if (pdfPath && fs.existsSync(pdfPath)) {
-      try {
-        fs.unlinkSync(pdfPath);
-      } catch (cleanupError) {
-        console.error("Failed to cleanup PDF:", cleanupError);
-      }
-    }
-
     return res.status(500).json({ error: "Failed to capture PayPal order" });
   }
 }

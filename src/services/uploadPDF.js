@@ -1,35 +1,35 @@
 import { v2 as cloudinary } from "cloudinary";
-import fs from "fs";
 
-export async function uploadPDFToCloudinary(filePath) {
-  try {
-    if (!fs.existsSync(filePath)) {
-      throw new Error(`PDF file not found: ${filePath}`);
-    }
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
 
-    const result = await cloudinary.uploader.upload(filePath, {
-      resource_type: "raw",
-      folder: "invoices",
-      use_filename: true,
-      unique_filename: false,
-      type: "private", // ✅ Keep private on Cloudinary
-    });
+export async function uploadPDFBufferToCloudinary(pdfBuffer, filename) {
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      {
+        resource_type: "auto", // ✅ Handles PDF as a viewable file
+        folder: "invoices",
+        public_id: filename,
+        format: "pdf",
+        type: "upload",
+        use_filename: true,
+        unique_filename: false,
+      },
+      (error, result) => {
+        if (error) return reject(error);
 
-    console.log("✅ PDF uploaded to Cloudinary privately");
-    console.log("✅ Public ID:", result.public_id);
+        resolve({
+          public_id: result.public_id,
+          format: result.format,
+          secure_url: result.secure_url, // ✅ Directly usable in browser
+          bytes: result.bytes,
+        });
+      }
+    );
 
-    fs.unlinkSync(filePath);
-
-    // ✅ Return public_id instead of URL
-    return {
-      public_id: result.public_id,
-      format: result.format || "pdf",
-    };
-  } catch (error) {
-    console.error("❌ Failed to upload PDF:", error);
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
-    }
-    throw new Error(`Failed to upload PDF: ${error.message}`);
-  }
+    uploadStream.end(pdfBuffer);
+  });
 }

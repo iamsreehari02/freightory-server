@@ -7,31 +7,30 @@ const addBranchLog = async ({ branchId, action, message, companyId }) => {
   return await BranchLog.create({ branchId, action, message, companyId });
 };
 
-// Create Branch with log
 export async function createBranch(data, userId) {
   const company = await Company.findById(data.companyId);
   if (!company) throw new Error("Company not found");
 
-  // Count existing branches
-  const currentBranchCount = await Branch.countDocuments({
+  // Get the actual number of branches associated with this company
+  const existingBranchesCount = await Branch.countDocuments({
     companyId: data.companyId,
   });
+
+  // Check if the number of existing branches matches the branchCount in the company document
+  if (existingBranchesCount >= company.branchCount) {
+    throw new Error(
+      "Maximum number of branches reached. Cannot add more branches."
+    );
+  }
 
   // Set renewalDate 1 year from now
   const renewalDate = new Date();
   renewalDate.setFullYear(renewalDate.getFullYear() + 1);
 
-  // Create branch
+  // Create the new branch
   const branch = await Branch.create({ ...data, renewalDate });
 
-  // Increment branchCount if needed
-  if (currentBranchCount + 1 > company.branchCount) {
-    await Company.findByIdAndUpdate(data.companyId, {
-      $inc: { branchCount: 1 },
-    });
-  }
-
-  // Log branch creation
+  // Log branch creation (assuming the addBranchLog function exists)
   await addBranchLog({
     companyId: data.companyId,
     branchId: branch._id,
@@ -39,6 +38,9 @@ export async function createBranch(data, userId) {
     message: `Branch "${branch.name}" created`,
     userId,
   });
+
+  // Optionally, you can also increment the branch count in the Company document after a successful creation.
+  // await Company.findByIdAndUpdate(data.companyId, { $inc: { branchCount: 1 } });
 
   return branch;
 }

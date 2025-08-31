@@ -303,12 +303,6 @@ export const register = async (req, res) => {
 
     session = regSession;
 
-    // 🔎 debug
-    console.log("[REGISTER] branchCount:", branchCount);
-    console.log("[REGISTER] baseRegistrationFee:", company.baseRegistrationFee);
-    console.log("[REGISTER] costPerBranch:", company.costPerBranch);
-
-    // ✅ ALWAYS pass an object so templates never explode
     const branchInfo = {
       hasBranches: branchCount > 0,
       count: branchCount || 0,
@@ -319,7 +313,6 @@ export const register = async (req, res) => {
         (branchCount || 0) * (company?.costPerBranch || 0),
     };
 
-    // Wrap each email in its own try so you see exactly which one fails
     try {
       await sendEmailTemplate({
         to: "admin@indlognetwork.com",

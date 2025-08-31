@@ -11,8 +11,6 @@ export async function sendEmailTemplate({
 }) {
   let html = htmlTemplate;
 
-  console.log("DEBUG: Sending email to =>", to);
-
   for (const [key, value] of Object.entries(replacements)) {
     html = html.replace(new RegExp(`{{\\s*${key}\\s*}}`, "g"), value);
   }

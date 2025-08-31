@@ -9,7 +9,8 @@ const paymentProofSchema = new mongoose.Schema(
     },
     transactionId: {
       type: String,
-      required: true, // UTR/Transaction ID from frontend
+      required: true,
+      unique: true,
     },
     amount: {
       type: Number,

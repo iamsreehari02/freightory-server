@@ -8,21 +8,21 @@ const transactionSchema = new mongoose.Schema({
     ref: "Company",
     required: true,
   },
-  company: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Company",
-    required: true,
-  },
   country: { type: String, required: true },
   amount: { type: Number, required: true },
   paymentMode: { type: String, enum: ["online", "offline"], required: true },
   status: {
     type: String,
-    enum: ["pending", "completed", "failed"],
+    enum: ["pending", "completed", "failed", "rejected"],
     default: "pending",
   },
-  invoiceUrl: { type: String },
+  invoiceFileName: { type: String },
+  invoicePdf: { type: Buffer },
   createdAt: { type: Date, default: Date.now },
+  paymentProof: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "PaymentProof",
+  },
 });
 
 export default mongoose.model("Transaction", transactionSchema);

@@ -204,18 +204,11 @@ export const registerCompanyAndUser = async (data) => {
           costPerBranch: costPerBranchInMinor,
           totalRegistrationCost: totalCost,
           paymentStatus: "pending",
+          branchCount,
         },
       ],
       { session }
     );
-
-    // Create branches if needed
-    if (finalBranchCount > 0) {
-      const branchesToCreate = Array.from({ length: finalBranchCount }).map(
-        () => ({ companyId: company._id })
-      );
-      await Branch.insertMany(branchesToCreate, { session });
-    }
 
     // Hash password & create user
     const hashedPassword = await bcrypt.hash(password, 12);

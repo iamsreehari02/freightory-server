@@ -2,6 +2,8 @@ import {
   uploadPaymentProofService,
   getAllPaymentProofsService,
   updatePaymentProofStatusService,
+  approvePaymentProofService,
+  rejectPaymentProofService,
 } from "../services/paymentProof.js";
 
 export const uploadPaymentProof = async (req, res) => {
@@ -58,5 +60,27 @@ export const updatePaymentProofStatus = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export const approvePaymentProofController = async (req, res) => {
+  try {
+    const { proofId, remarks } = req.body;
+    const result = await approvePaymentProofService(proofId, remarks);
+    res.status(200).json({ success: true, data: result });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+export const rejectPaymentProofController = async (req, res) => {
+  try {
+    const { proofId, remarks } = req.body;
+    const result = await rejectPaymentProofService(proofId, remarks);
+    res.status(200).json({ success: true, data: result });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: err.message });
   }
 };

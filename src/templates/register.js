@@ -1,4 +1,8 @@
+import { formatCurrency } from "../utils/currency.js";
+
 export function adminRegistrationTemplate({ user, company, branchInfo }) {
+  const companyCurrency = company.currency || "USD";
+
   return `
     <h2>New Company Registration</h2>
     <p>A new user has registered on <strong>INDLOG NETWORK</strong>.</p>
@@ -24,9 +28,9 @@ export function adminRegistrationTemplate({ user, company, branchInfo }) {
     <h3>Branch & Cost Info</h3>
     <ul>
       <li><strong>Branches:</strong> ${branchInfo.count}</li>
-      <li><strong>Base Fee:</strong> ₹${branchInfo.baseRegistrationFee / 100}</li>
-      <li><strong>Cost per Branch:</strong> ₹${branchInfo.costPerBranch / 100}</li>
-      <li><strong>Total Cost:</strong> ₹${branchInfo.totalCost / 100}</li>
+      <li><strong>Base Fee:</strong> ${formatCurrency(branchInfo.baseRegistrationFee, companyCurrency)}</li>
+      <li><strong>Cost per Branch:</strong> ${formatCurrency(branchInfo.costPerBranch, companyCurrency)}</li>
+      <li><strong>Total Cost:</strong> ${formatCurrency(branchInfo.totalCost, companyCurrency)}</li>
     </ul>
 
     <p style="margin-top:20px; font-size:12px; color:#777;">This is an automated notification.</p>
@@ -39,10 +43,11 @@ export function userThankYouTemplate({ company }) {
     <p>Dear <strong>${company.contactPerson}</strong>,</p>
     <p>Thank you for registering your company <strong>${company.companyName}</strong> with us.</p>
     
-    <p>Your account has been created successfully. You can now log in and access your dashboard.</p>
+    <p>Your account has been created successfully. To activate your account, please complete the payment in the next steps.</p>
+    
+    <p style="margin-top:20px;">Once the payment is completed, you can log in and access your dashboard.</p>
 
     <p style="margin-top:20px;">We’re excited to have you onboard 🚀</p>
 
-    <p style="margin-top:20px; font-size:12px; color:#777;">If you have any questions, feel free to reply to this email.</p>
   `;
 }
