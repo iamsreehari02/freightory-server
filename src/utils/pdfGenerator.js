@@ -379,7 +379,7 @@ export async function generatePDFBuffer(invoiceData) {
     });
 
     yPos -= 20;
-    page.drawText("+123-456-7890 123", {
+    page.drawText("+91 9322876710", {
       x: 50,
       y: yPos,
       size: 10,
@@ -388,7 +388,7 @@ export async function generatePDFBuffer(invoiceData) {
     });
 
     yPos -= 15;
-    page.drawText("No.1, Logistics Street, Chennai -", {
+    page.drawText("A207,Alguj CHS", {
       x: 50,
       y: yPos,
       size: 10,
@@ -397,7 +397,7 @@ export async function generatePDFBuffer(invoiceData) {
     });
 
     yPos -= 15;
-    page.drawText("600001, India", {
+    page.drawText("Thane, Mumbai 400610", {
       x: 50,
       y: yPos,
       size: 10,
@@ -423,9 +423,17 @@ export async function generatePDFBuffer(invoiceData) {
       color: darkGray,
     });
 
-    page.drawText("INDLOG Network", {
+    page.drawText("Indlog Network", {
       x: width - 200,
       y: yPos + 20,
+      size: 10,
+      font: regularFont,
+      color: darkGray,
+    });
+
+    page.drawText("Own and Operated by MFA Network INC.", {
+      x: width - 200,
+      y: yPos,
       size: 10,
       font: regularFont,
       color: darkGray,

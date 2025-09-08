@@ -269,6 +269,14 @@ export async function capturePayPalOrder(req, res) {
       const transactionNumber = await getNextTransactionNumber(true);
       transaction.transactionNumber = transactionNumber;
 
+      const user = await User.findOne({ companyId }).select("email name phone");
+
+      if (!user) {
+        return res
+          .status(404)
+          .json({ error: "No user found for this company" });
+      }
+
       const invoiceData = {
         companyName: updatedCompany.companyName,
         transactionNumber,
@@ -276,7 +284,9 @@ export async function capturePayPalOrder(req, res) {
         amount: updatedCompany.totalRegistrationCost,
         currency: updatedCompany.currency,
         country: updatedCompany.country,
+        pincode: updatedCompany.pinCode,
         headOfficeAddress: updatedCompany.headOfficeAddress,
+        phone: user.phone,
         pinCode: updatedCompany.pinCode,
         website: updatedCompany.website,
         date: new Date().toLocaleDateString(),
@@ -294,7 +304,6 @@ export async function capturePayPalOrder(req, res) {
 
       transaction.invoicePdf = pdfBuffer;
       await transaction.save();
-      const user = await User.findOne({ companyId }).select("email name");
 
       if (user) {
         await sendEmailTemplate({

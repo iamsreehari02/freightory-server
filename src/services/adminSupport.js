@@ -4,7 +4,7 @@ import { sendEmailTemplate } from "./email.js";
 export async function sendSupportRequest({ subject, description, userEmail }) {
   const html = adminSupportEmailTemplate({ subject, description, userEmail });
 
-  const to = process.env.SUPPORT_EMAIL || "sh981572@gmail.com";
+  const to = process.env.SUPPORT_EMAIL || "support@isgcs.com";
 
   await sendEmailTemplate({
     to,
